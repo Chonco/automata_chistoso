@@ -1,12 +1,18 @@
 import table.ResultsTable;
+import validation.Validation;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Scanner;
 
 public class Main extends JPanel {
     private final JFileChooser fileChooser;
     private final ResultsTable resultsTable;
+    private File file;
 
     Main() {
         fileChooser = new JFileChooser();
@@ -30,14 +36,25 @@ public class Main extends JPanel {
 
     private JPanel getButtonsPanel() {
         JButton processButton = new JButton("Procesar");
+        processButton.setEnabled(false);
+        processButton.addActionListener(e -> {
+            if (file == null) return;
+
+            String fileContent = readFile(file);
+            Validation validation = new Validation(fileContent);
+            resultsTable.setResults(validation.validate());
+
+            processButton.setEnabled(false);
+        });
 
         JButton selectFileButton = new JButton("Elegir Archivo");
         selectFileButton.addActionListener(e -> {
             int returnVal = fileChooser.showOpenDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
+                file = fileChooser.getSelectedFile();
                 selectFileButton.setText(file.getName());
+                processButton.setEnabled(true);
             }
         });
         JButton exportButton = new JButton("Exportar");
@@ -50,6 +67,20 @@ public class Main extends JPanel {
         panel.add(exportButton);
 
         return panel;
+    }
+
+    private String readFile(File file) {
+        StringBuilder sb = new StringBuilder();
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                sb.append(scanner.nextLine());
+                sb.append("\n");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return sb.toString();
     }
 
     public static void main(String[] args) {

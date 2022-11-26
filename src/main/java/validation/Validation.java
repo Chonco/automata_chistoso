@@ -1,31 +1,53 @@
 package validation;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Validation {
+    private final String[] inputParts;
     private String input;
-    private int index = 0;
-
-    public Validation(String input) {
-        this.input = input;
-    }
-
-    public void setInput(String input) {
-        this.input = input;
-    }
+    private int currentInputIndex = 0;
 
     private final String[] reservedKeywords = new String[]{"if", "else", "switch", "case", "default",
             "for", "while", "break", "int", "String", "double", "char"};
 
+    public Validation(String input) {
+        this.inputParts = separateInput(input);
+    }
+
+    private String[] separateInput(String input) {
+        List<String> parts = new ArrayList<>();
+
+        int from = 0;
+        int to = 0;
+        for (; to < input.length(); to++) {
+            if (input.charAt(to) == ' ' || input.charAt(to) == '\t' || input.charAt(to) == '\n') {
+                String part = input.substring(from, to);
+                parts.add(part);
+
+                from = to + 1;
+            }
+        }
+
+        if (from < to) {
+            String part = input.substring(from, to);
+            parts.add(part);
+        }
+
+        return parts.stream()
+                .filter(part -> part.length() != 0)
+                .toList()
+                .toArray(new String[0]);
+    }
+
     public Map<Token, Integer> validate() {
-        index = 0;
+        int inputIndex = 0;
         final Map<Token, Integer> results = new HashMap<>();
 
         do {
-            int from = index;
-            Token tokenResult = switch (input.charAt(index)) {
+            input = this.inputParts[inputIndex++];
+            currentInputIndex = 0;
+
+            Token tokenResult = switch (input.charAt(currentInputIndex)) {
                 case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' -> firstState();
                 case '+', '-' -> thirdState();
                 case '*', '%' -> fourthState();
@@ -40,10 +62,12 @@ public class Validation {
                         'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
                         'w', 'x', 'y', 'z' -> fourteenthState();
                 case '/' -> fifteenthState();
-                default -> Token.ERROR;
+                default -> null;
             };
 
-            if (tokenResult == Token.IDENTIFIER && isReservedKeyword(from, index)) {
+            if (tokenResult == null) continue;
+
+            if (tokenResult == Token.IDENTIFIER && isReservedKeyword(input)) {
                 tokenResult = Token.RESERVED_KEYWORD;
             }
 
@@ -53,29 +77,29 @@ public class Validation {
                 results.put(tokenResult, 1);
             }
 
-        } while (index < input.length());
+        } while (inputIndex < inputParts.length);
 
         return results;
     }
 
     private Token firstState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' -> firstState();
                 case '\n', '\t', ' ' -> Token.INT_NUMBER;
                 case '.' -> twentyFirstState();
                 default -> Token.ERROR;
             };
-        } catch (ArrayIndexOutOfBoundsException exception) {
+        } catch (IndexOutOfBoundsException exception) {
             return Token.INT_NUMBER;
         }
     }
 
     private Token secondState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' -> secondState();
                 case '\n', '\t', ' ' -> Token.DECIMAL_NUMBER;
                 default -> Token.ERROR;
@@ -86,9 +110,9 @@ public class Validation {
     }
 
     private Token thirdState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' -> firstState();
                 case '\n', '\t', ' ' -> Token.ARITHMETIC_OPERATOR;
                 default -> Token.ERROR;
@@ -99,9 +123,9 @@ public class Validation {
     }
 
     private Token fourthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '\n', '\t', ' ' -> Token.ARITHMETIC_OPERATOR;
                 default -> Token.ERROR;
             };
@@ -111,9 +135,9 @@ public class Validation {
     }
 
     private Token fifthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '\n', '\t', ' ' -> Token.PARENTHESIS;
                 default -> Token.ERROR;
             };
@@ -123,9 +147,9 @@ public class Validation {
     }
 
     private Token sixthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '=' -> twentiethState();
                 case '\n', '\t', ' ' -> Token.ASSIGNATION;
                 default -> Token.ERROR;
@@ -136,10 +160,10 @@ public class Validation {
     }
 
     private Token seventhState() {
-        index++;
+        currentInputIndex++;
 
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '&' -> ninthState();
                 default -> Token.ERROR;
             };
@@ -149,9 +173,9 @@ public class Validation {
     }
 
     private Token eighthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '|' -> ninthState();
                 default -> Token.ERROR;
             };
@@ -161,9 +185,9 @@ public class Validation {
     }
 
     private Token ninthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '\n', '\t', ' ' -> Token.LOGICAL_OPERATOR;
                 default -> Token.ERROR;
             };
@@ -173,9 +197,9 @@ public class Validation {
     }
 
     private Token tenthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '=' -> twelfthState();
                 case '\n', '\t', ' ' -> Token.LOGICAL_OPERATOR;
                 default -> Token.ERROR;
@@ -186,9 +210,9 @@ public class Validation {
     }
 
     private Token eleventhState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '=' -> twelfthState();
                 case '\n', '\t', ' ' -> Token.RELATIONAL_OPERATOR;
                 default -> Token.ERROR;
@@ -199,9 +223,9 @@ public class Validation {
     }
 
     private Token twelfthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '\n', '\t', ' ' -> Token.RELATIONAL_OPERATOR;
                 default -> Token.ERROR;
             };
@@ -211,9 +235,9 @@ public class Validation {
     }
 
     private Token thirteenthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '\n', '\t', ' ' -> Token.CURLY_PARENTHESIS;
                 default -> Token.ERROR;
             };
@@ -223,9 +247,9 @@ public class Validation {
     }
 
     private Token fourteenthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
                         'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
                         'w', 'x', 'y', 'z', '_', '1', '2', '3', '4', '5', '6',
@@ -239,9 +263,9 @@ public class Validation {
     }
 
     private Token fifteenthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '*' -> sixteenthState();
                 case '\n', '\t', ' ' -> Token.ARITHMETIC_OPERATOR;
                 default -> Token.ERROR;
@@ -252,9 +276,9 @@ public class Validation {
     }
 
     private Token sixteenthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '*' -> eighteenthState();
                 case '\n', '\t', ' ' -> Token.ERROR;
                 default -> sixteenthState();
@@ -265,9 +289,9 @@ public class Validation {
     }
 
     private Token eighteenthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '/' -> nineteenthState();
                 case '*' -> eighteenthState();
                 case '\n', '\t', ' ' -> Token.ERROR;
@@ -279,9 +303,9 @@ public class Validation {
     }
 
     private Token nineteenthState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '\n', '\t', ' ' -> Token.COMMENT;
                 default -> Token.ERROR;
             };
@@ -291,9 +315,9 @@ public class Validation {
     }
 
     private Token twentiethState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '\n', '\t', ' ' -> Token.RELATIONAL_OPERATOR;
                 default -> Token.ERROR;
             };
@@ -303,9 +327,9 @@ public class Validation {
     }
 
     private Token twentyFirstState() {
-        index++;
+        currentInputIndex++;
         try {
-            return switch (input.charAt(index)) {
+            return switch (input.charAt(currentInputIndex)) {
                 case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' -> secondState();
                 default -> Token.ERROR;
             };
@@ -314,8 +338,7 @@ public class Validation {
         }
     }
 
-    private boolean isReservedKeyword(int from, int to) {
-        String toValidate = input.substring(from, to);
+    private boolean isReservedKeyword(String toValidate) {
         return Arrays.asList(reservedKeywords)
                 .contains(toValidate);
     }
