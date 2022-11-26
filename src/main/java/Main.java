@@ -1,13 +1,16 @@
+import table.ResultsTable;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.Vector;
 
 public class Main extends JPanel {
     private final JFileChooser fileChooser;
+    private final ResultsTable resultsTable;
 
     Main() {
         fileChooser = new JFileChooser();
+        resultsTable = new ResultsTable();
 
         setLayout(new BorderLayout());
         add(getTablePanel(), BorderLayout.CENTER);
@@ -15,57 +18,7 @@ public class Main extends JPanel {
     }
 
     private JPanel getTablePanel() {
-        Vector<String> columNames = new Vector<>();
-        columNames.add("Tipo de Token");
-        columNames.add("Cantidad");
-
-        Vector<Vector<String>> data = new Vector<>();
-        Vector<String> row = new Vector<>();
-        row.add("Palabra reservada");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Identificador");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Operador Relacional");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Operador Lógico");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Operador Aritmético");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Asignación");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Número entero");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Número decimal");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Comentario");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Paréntesis");
-        row.add("");
-        data.add(row);
-        row = new Vector<>();
-        row.add("Llaves");
-        row.add("");
-        data.add(row);
-
-        JTable table = new JTable(data, columNames);
+        JTable table = new JTable(resultsTable);
         JScrollPane jScrollPane = new JScrollPane(table);
 
         JPanel panel = new JPanel();
