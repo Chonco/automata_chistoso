@@ -11,7 +11,8 @@ public enum Token {
     DECIMAL_NUMBER("Número decimal"),
     COMMENT("Comentario"),
     PARENTHESIS("Paréntesis"),
-    CURLY_PARENTHESIS("Llave");
+    CURLY_PARENTHESIS("Llave"),
+    ERROR("Error");
 
     private final String tagName;
 
